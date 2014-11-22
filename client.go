@@ -8,6 +8,16 @@ import (
 	"time"
 )
 
+type Dialer interface {
+	Dial(protocol, address string) (net.Conn, error)
+}
+
+type NetDialer struct {}
+
+func (dialer NetDialer) Dial(protocol, address string) (net.Conn, error) {
+	return net.Dial(protocol, address)
+}
+
 // Client contains the fields necessary to communicate
 // with Apple, such as the gateway to use and your
 // certificate contents.
@@ -19,6 +29,7 @@ import (
 // but if you prefer you can use the CertificateBase64
 // and KeyBase64 fields to store the actual contents.
 type Client struct {
+	Dialer            Dialer
 	Gateway           string
 	CertificateFile   string
 	CertificateBase64 string
@@ -30,6 +41,7 @@ type Client struct {
 // certificate and key blocks manually.
 func BareClient(gateway, certificateBase64, keyBase64 string) (c *Client) {
 	c = new(Client)
+	c.Dialer = NetDialer{}
 	c.Gateway = gateway
 	c.CertificateBase64 = certificateBase64
 	c.KeyBase64 = keyBase64
@@ -40,6 +52,7 @@ func BareClient(gateway, certificateBase64, keyBase64 string) (c *Client) {
 // point to your certificate and key.
 func NewClient(gateway, certificateFile, keyFile string) (c *Client) {
 	c = new(Client)
+	c.Dialer = NetDialer{}
 	c.Gateway = gateway
 	c.CertificateFile = certificateFile
 	c.KeyFile = keyFile
@@ -103,7 +116,7 @@ func (client *Client) ConnectAndWrite(resp *PushNotificationResponse, payload []
 		ServerName: gatewayParts[0],
 	}
 
-	conn, err := net.Dial("tcp", client.Gateway)
+	conn, err := client.Dialer.Dial("tcp", client.Gateway)
 	if err != nil {
 		return err
 	}
