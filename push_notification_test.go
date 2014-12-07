@@ -11,16 +11,8 @@ const testDeviceToken = "e93b7686988b4b5fd334298e60e73d90035f6d12628a80b4029bde0
 func mockPayload() (payload *Payload) {
 	payload = NewPayload()
 	payload.Alert = "You have mail!"
-	payload.Badge = 42
+	payload.SetBadge(42)
 	payload.Sound = "bingbong.aiff"
-	return
-}
-
-// See the commentary in push_notification.go for information
-// on why we're testing a badge of value 0.
-func mockZeroBadgePayload() (payload *Payload) {
-	payload = mockPayload()
-	payload.Badge = 0
 	return
 }
 
@@ -97,15 +89,5 @@ func TestCustomParameters(t *testing.T) {
 	}
 	if len(json) != 81 {
 		t.Error("expected 81 bytes; got", len(json))
-	}
-}
-
-func TestZeroBadgeChangesToNegativeOne(t *testing.T) {
-	payload := mockZeroBadgePayload()
-	pn := NewPushNotification()
-	pn.AddPayload(payload)
-
-	if payload.Badge != -1 {
-		t.Error("expected 0 badge value to be converted to -1; got", payload.Badge)
 	}
 }
